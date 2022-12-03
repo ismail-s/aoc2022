@@ -1,4 +1,5 @@
 use std::fs;
+use std::collections::HashSet;
 
 pub fn day1_part1(filename: &str) -> u64 {
     let input = fs::read_to_string(filename).unwrap();
@@ -107,4 +108,44 @@ pub fn day2_part2(filename: &str) -> u64 {
 fn day2_test() {
     assert_eq!(11449, day2_part1("inputs/2.txt"));
     assert_eq!(13187, day2_part2("inputs/2.txt"));
+}
+
+pub fn day3_part1(filename: &str) -> u32 {
+    let input = fs::read_to_string(filename).unwrap();
+    input.lines()
+         .map(|l| {
+             let len = l.len();
+             let fst = &l[0..len/2].chars().collect::<HashSet<char>>();
+             let snd = &l[len/2..].chars().collect::<HashSet<char>>();
+             let chr = fst.intersection(snd).next().unwrap().clone() as u32;
+             if 'a' as u32 <= chr && 'z' as u32 >= chr {
+                 chr - ('a' as u32) + 1
+             } else {
+                 chr - ('A' as u32) + 27
+             }
+         })
+         .sum()
+}
+
+pub fn day3_part2(filename: &str) -> u32 {
+    let input = fs::read_to_string(filename).unwrap();
+    input.lines().collect::<Vec<&str>>().chunks(3)
+         .map(|l| {
+             let fst = &l[0].chars().collect::<HashSet<char>>();
+             let snd = &l[1].chars().collect::<HashSet<char>>();
+             let thr = &l[2].chars().collect::<HashSet<char>>();
+             let chr = fst.intersection(snd).map(|f|f.clone()).collect::<HashSet<char>>().intersection(thr).next().unwrap().clone() as u32;
+             if 'a' as u32 <= chr && 'z' as u32 >= chr {
+                 chr - ('a' as u32) + 1
+             } else {
+                 chr - ('A' as u32) + 27
+             }
+         })
+         .sum()
+}
+
+#[test]
+fn day3_test() {
+    assert_eq!(7850, day3_part1("inputs/3.txt"));
+    assert_eq!(2581, day3_part2("inputs/3.txt"));
 }
