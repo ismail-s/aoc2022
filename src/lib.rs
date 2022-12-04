@@ -1,3 +1,4 @@
+use regex::Regex;
 use std::fs;
 use std::collections::HashSet;
 
@@ -148,4 +149,40 @@ pub fn day3_part2(filename: &str) -> u32 {
 fn day3_test() {
     assert_eq!(7850, day3_part1("inputs/3.txt"));
     assert_eq!(2581, day3_part2("inputs/3.txt"));
+}
+
+pub fn day4_part1(filename: &str) -> usize {
+    let re = Regex::new(r"(?P<fst>\d+)-(?P<snd>\d+),(?P<thr>\d+)-(?P<fth>\d+)").unwrap();
+    let input = fs::read_to_string(filename).unwrap();
+    input.lines()
+         .filter(|&l| {
+             let caps = re.captures(l).unwrap();
+             let fst = *(&caps["fst"].parse::<u32>().unwrap());
+             let snd = *(&caps["snd"].parse::<u32>().unwrap());
+             let thr = *(&caps["thr"].parse::<u32>().unwrap());
+             let fth = *(&caps["fth"].parse::<u32>().unwrap());
+             (fst >= thr && snd <= fth) || (thr >= fst && fth <= snd)
+         })
+         .count()
+}
+
+pub fn day4_part2(filename: &str) -> usize {
+    let re = Regex::new(r"(?P<fst>\d+)-(?P<snd>\d+),(?P<thr>\d+)-(?P<fth>\d+)").unwrap();
+    let input = fs::read_to_string(filename).unwrap();
+    input.lines()
+         .filter(|&l| {
+             let caps = re.captures(l).unwrap();
+             let fst = *(&caps["fst"].parse::<u32>().unwrap());
+             let snd = *(&caps["snd"].parse::<u32>().unwrap());
+             let thr = *(&caps["thr"].parse::<u32>().unwrap());
+             let fth = *(&caps["fth"].parse::<u32>().unwrap());
+             (fst >= thr && snd <= fth) || (thr >= fst && fth <= snd) || (fst >= thr && fst <= fth) || (snd >= thr && snd <= fth)
+         })
+         .count()
+}
+
+#[test]
+fn day4_test() {
+    assert_eq!(471, day4_part1("inputs/4.txt"));
+    assert_eq!(888, day4_part2("inputs/4.txt"));
 }
