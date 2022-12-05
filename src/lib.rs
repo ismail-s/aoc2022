@@ -186,3 +186,76 @@ fn day4_test() {
     assert_eq!(471, day4_part1("inputs/4.txt"));
     assert_eq!(888, day4_part2("inputs/4.txt"));
 }
+
+pub fn day5_part1(filename: &str) -> String {
+    let re = Regex::new(r"move (?P<count>\d+) from (?P<from>\d+) to (?P<to>\d+)").unwrap();
+    let input = fs::read_to_string(filename).unwrap();
+    let v = input.split("\n\n").collect::<Vec<&str>>();
+    let first_part = v[0];
+    let second_part = v[1];
+    let stacks_num = first_part.lines().rev().nth(0).unwrap().split(" ").last().unwrap().parse::<u32>().unwrap();
+    let mut stacks: Vec<Vec<char>> = Vec::new();
+    for _ in 0..stacks_num {
+        stacks.push(Vec::new());
+    }
+    for line in first_part.lines().rev().skip(1) {
+        for (i, _) in line.match_indices("[") {
+            let chr = line.chars().nth(i+1).unwrap();
+            stacks[i/4].push(chr);
+        }
+    }
+
+    for line in second_part.lines() {
+        let caps = re.captures(line).unwrap();
+        let count = *(&caps["count"].parse::<u32>().unwrap());
+        let from = *(&caps["from"].parse::<usize>().unwrap());
+        let to = *(&caps["to"].parse::<usize>().unwrap());
+        for _ in 0..count {
+            let temp = stacks[from-1].pop().unwrap();
+            stacks[to-1].push(temp);
+        }
+    }
+
+    stacks.iter().map(|stack| stack.last().unwrap().clone()).collect::<String>()
+}
+
+pub fn day5_part2(filename: &str) -> String {
+    let re = Regex::new(r"move (?P<count>\d+) from (?P<from>\d+) to (?P<to>\d+)").unwrap();
+    let input = fs::read_to_string(filename).unwrap();
+    let v = input.split("\n\n").collect::<Vec<&str>>();
+    let first_part = v[0];
+    let second_part = v[1];
+    let stacks_num = first_part.lines().rev().nth(0).unwrap().split(" ").last().unwrap().parse::<u32>().unwrap();
+    let mut stacks: Vec<Vec<char>> = Vec::new();
+    for _ in 0..stacks_num {
+        stacks.push(Vec::new());
+    }
+    for line in first_part.lines().rev().skip(1) {
+        for (i, _) in line.match_indices("[") {
+            let chr = line.chars().nth(i+1).unwrap();
+            stacks[i/4].push(chr);
+        }
+    }
+
+    for line in second_part.lines() {
+        let caps = re.captures(line).unwrap();
+        let count = *(&caps["count"].parse::<u32>().unwrap());
+        let from = *(&caps["from"].parse::<usize>().unwrap());
+        let to = *(&caps["to"].parse::<usize>().unwrap());
+        let mut temp: Vec<char> = Vec::new();
+        for _ in 0..count {
+            temp.push(stacks[from-1].pop().unwrap());
+        }
+        for chr in temp.iter().rev() {
+            stacks[to-1].push(*chr);
+        }
+    }
+
+    stacks.iter().map(|stack| stack.last().unwrap().clone()).collect::<String>()
+}
+
+#[test]
+fn day5_test() {
+    assert_eq!("HNSNMTLHQ", day5_part1("inputs/5.txt"));
+    assert_eq!("RNLFDJMCT", day5_part2("inputs/5.txt"));
+}
