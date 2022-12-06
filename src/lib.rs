@@ -28,16 +28,16 @@ fn day1_test() {
 }
 
 enum RPS {
-    ROCK,
-    PAPER,
-    SCISSORS
+    Rock,
+    Paper,
+    Scissors
 }
 
 pub fn day2_part1(filename: &str) -> u64 {
     let input = fs::read_to_string(filename).unwrap();
     input.lines()
          .map(|f| {
-             let opp = day2_opponent_code(f.chars().nth(0).unwrap());
+             let opp = day2_opponent_code(f.chars().next().unwrap());
              let pla = day2_player_code(f.chars().nth(2).unwrap());
              day2_round_score(&opp, &pla)
          })
@@ -46,31 +46,31 @@ pub fn day2_part1(filename: &str) -> u64 {
 
 fn day2_opponent_code(chr: char) -> RPS {
     match chr {
-        'A' => RPS::ROCK,
-        'B' => RPS::PAPER,
-        'C' => RPS::SCISSORS,
+        'A' => RPS::Rock,
+        'B' => RPS::Paper,
+        'C' => RPS::Scissors,
         _ => panic!()
     }
 }
 
 fn day2_player_code(chr: char) -> RPS {
     match chr {
-        'X' => RPS::ROCK,
-        'Y' => RPS::PAPER,
-        'Z' => RPS::SCISSORS,
+        'X' => RPS::Rock,
+        'Y' => RPS::Paper,
+        'Z' => RPS::Scissors,
         _ => panic!()
     }
 }
 
 fn day2_round_score(opp: &RPS, pla: &RPS) -> u64 {
     let shape_score = match pla {
-        RPS::ROCK => 1,
-        RPS::PAPER => 2,
-        RPS::SCISSORS => 3,
+        RPS::Rock => 1,
+        RPS::Paper => 2,
+        RPS::Scissors => 3,
     };
     let outcome_score = match (opp, pla) {
-        (RPS::ROCK, RPS::PAPER) | (RPS::PAPER, RPS::SCISSORS) | (RPS::SCISSORS, RPS::ROCK) => 6,
-        (RPS::ROCK, RPS::ROCK) | (RPS::PAPER, RPS::PAPER) | (RPS::SCISSORS, RPS::SCISSORS)  => 3,
+        (RPS::Rock, RPS::Paper) | (RPS::Paper, RPS::Scissors) | (RPS::Scissors, RPS::Rock) => 6,
+        (RPS::Rock, RPS::Rock) | (RPS::Paper, RPS::Paper) | (RPS::Scissors, RPS::Scissors)  => 3,
         _ => 0
     };
     shape_score + outcome_score
@@ -80,25 +80,25 @@ pub fn day2_part2(filename: &str) -> u64 {
     let input = fs::read_to_string(filename).unwrap();
     input.lines()
          .map(|f| {
-             let opp = day2_opponent_code(f.chars().nth(0).unwrap());
+             let opp = day2_opponent_code(f.chars().next().unwrap());
              match f.chars().nth(2).unwrap() {
                  // lose
-                 'X' => 0 + match opp {
-                     RPS::ROCK => 3,
-                     RPS::PAPER => 1,
-                     RPS::SCISSORS => 2,
+                 'X' => /*0 + */ match opp {
+                     RPS::Rock => 3,
+                     RPS::Paper => 1,
+                     RPS::Scissors => 2,
                  },
                  // draw
                  'Y' => 3 + match opp {
-                     RPS::ROCK => 1,
-                     RPS::PAPER => 2,
-                     RPS::SCISSORS => 3,
+                     RPS::Rock => 1,
+                     RPS::Paper => 2,
+                     RPS::Scissors => 3,
                  },
                  // win
                  'Z' => 6 + match opp {
-                     RPS::ROCK => 2,
-                     RPS::PAPER => 3,
-                     RPS::SCISSORS => 1,
+                     RPS::Rock => 2,
+                     RPS::Paper => 3,
+                     RPS::Scissors => 1,
                  },
                  _ => panic!()
              }
@@ -119,7 +119,7 @@ pub fn day3_part1(filename: &str) -> u32 {
              let len = l.len();
              let fst = &l[0..len/2].chars().collect::<HashSet<char>>();
              let snd = &l[len/2..].chars().collect::<HashSet<char>>();
-             let chr = fst.intersection(snd).next().unwrap().clone() as u32;
+             let chr = *fst.intersection(snd).next().unwrap() as u32;
              if 'a' as u32 <= chr && 'z' as u32 >= chr {
                  chr - ('a' as u32) + 1
              } else {
@@ -136,7 +136,7 @@ pub fn day3_part2(filename: &str) -> u32 {
              let fst = &l[0].chars().collect::<HashSet<char>>();
              let snd = &l[1].chars().collect::<HashSet<char>>();
              let thr = &l[2].chars().collect::<HashSet<char>>();
-             let chr = fst.intersection(snd).map(|f|f.clone()).collect::<HashSet<char>>().intersection(thr).next().unwrap().clone() as u32;
+             let chr = *fst.intersection(snd).copied().collect::<HashSet<char>>().intersection(thr).next().unwrap() as u32;
              if 'a' as u32 <= chr && 'z' as u32 >= chr {
                  chr - ('a' as u32) + 1
              } else {
@@ -158,10 +158,10 @@ pub fn day4_part1(filename: &str) -> usize {
     input.lines()
          .filter(|&l| {
              let caps = re.captures(l).unwrap();
-             let fst = *(&caps["fst"].parse::<u32>().unwrap());
-             let snd = *(&caps["snd"].parse::<u32>().unwrap());
-             let thr = *(&caps["thr"].parse::<u32>().unwrap());
-             let fth = *(&caps["fth"].parse::<u32>().unwrap());
+             let fst = caps["fst"].parse::<u32>().unwrap();
+             let snd = caps["snd"].parse::<u32>().unwrap();
+             let thr = caps["thr"].parse::<u32>().unwrap();
+             let fth = caps["fth"].parse::<u32>().unwrap();
              (fst >= thr && snd <= fth) || (thr >= fst && fth <= snd)
          })
          .count()
@@ -173,10 +173,10 @@ pub fn day4_part2(filename: &str) -> usize {
     input.lines()
          .filter(|&l| {
              let caps = re.captures(l).unwrap();
-             let fst = *(&caps["fst"].parse::<u32>().unwrap());
-             let snd = *(&caps["snd"].parse::<u32>().unwrap());
-             let thr = *(&caps["thr"].parse::<u32>().unwrap());
-             let fth = *(&caps["fth"].parse::<u32>().unwrap());
+             let fst = caps["fst"].parse::<u32>().unwrap();
+             let snd = caps["snd"].parse::<u32>().unwrap();
+             let thr = caps["thr"].parse::<u32>().unwrap();
+             let fth = caps["fth"].parse::<u32>().unwrap();
              (fst >= thr && snd <= fth) || (thr >= fst && fth <= snd) || (fst >= thr && fst <= fth) || (snd >= thr && snd <= fth)
          })
          .count()
@@ -194,13 +194,13 @@ pub fn day5_part1(filename: &str) -> String {
     let v = input.split("\n\n").collect::<Vec<&str>>();
     let first_part = v[0];
     let second_part = v[1];
-    let stacks_num = first_part.lines().rev().nth(0).unwrap().split(" ").last().unwrap().parse::<u32>().unwrap();
+    let stacks_num = first_part.lines().rev().next().unwrap().split(' ').last().unwrap().parse::<u32>().unwrap();
     let mut stacks: Vec<Vec<char>> = Vec::new();
     for _ in 0..stacks_num {
         stacks.push(Vec::new());
     }
     for line in first_part.lines().rev().skip(1) {
-        for (i, _) in line.match_indices("[") {
+        for (i, _) in line.match_indices('[') {
             let chr = line.chars().nth(i+1).unwrap();
             stacks[i/4].push(chr);
         }
@@ -208,16 +208,16 @@ pub fn day5_part1(filename: &str) -> String {
 
     for line in second_part.lines() {
         let caps = re.captures(line).unwrap();
-        let count = *(&caps["count"].parse::<u32>().unwrap());
-        let from = *(&caps["from"].parse::<usize>().unwrap());
-        let to = *(&caps["to"].parse::<usize>().unwrap());
+        let count = caps["count"].parse::<u32>().unwrap();
+        let from = caps["from"].parse::<usize>().unwrap();
+        let to = caps["to"].parse::<usize>().unwrap();
         for _ in 0..count {
             let temp = stacks[from-1].pop().unwrap();
             stacks[to-1].push(temp);
         }
     }
 
-    stacks.iter().map(|stack| stack.last().unwrap().clone()).collect::<String>()
+    stacks.iter().map(|stack| *stack.last().unwrap()).collect::<String>()
 }
 
 pub fn day5_part2(filename: &str) -> String {
@@ -226,13 +226,13 @@ pub fn day5_part2(filename: &str) -> String {
     let v = input.split("\n\n").collect::<Vec<&str>>();
     let first_part = v[0];
     let second_part = v[1];
-    let stacks_num = first_part.lines().rev().nth(0).unwrap().split(" ").last().unwrap().parse::<u32>().unwrap();
+    let stacks_num = first_part.lines().rev().next().unwrap().split(' ').last().unwrap().parse::<u32>().unwrap();
     let mut stacks: Vec<Vec<char>> = Vec::new();
     for _ in 0..stacks_num {
         stacks.push(Vec::new());
     }
     for line in first_part.lines().rev().skip(1) {
-        for (i, _) in line.match_indices("[") {
+        for (i, _) in line.match_indices('[') {
             let chr = line.chars().nth(i+1).unwrap();
             stacks[i/4].push(chr);
         }
@@ -240,9 +240,9 @@ pub fn day5_part2(filename: &str) -> String {
 
     for line in second_part.lines() {
         let caps = re.captures(line).unwrap();
-        let count = *(&caps["count"].parse::<u32>().unwrap());
-        let from = *(&caps["from"].parse::<usize>().unwrap());
-        let to = *(&caps["to"].parse::<usize>().unwrap());
+        let count = caps["count"].parse::<u32>().unwrap();
+        let from = caps["from"].parse::<usize>().unwrap();
+        let to = caps["to"].parse::<usize>().unwrap();
         let mut temp: Vec<char> = Vec::new();
         for _ in 0..count {
             temp.push(stacks[from-1].pop().unwrap());
@@ -252,7 +252,7 @@ pub fn day5_part2(filename: &str) -> String {
         }
     }
 
-    stacks.iter().map(|stack| stack.last().unwrap().clone()).collect::<String>()
+    stacks.iter().map(|stack| *stack.last().unwrap()).collect::<String>()
 }
 
 #[test]
