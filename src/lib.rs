@@ -1,6 +1,7 @@
 use regex::Regex;
 use std::fs;
 use std::collections::HashSet;
+use std::collections::VecDeque;
 
 pub fn day1_part1(filename: &str) -> u64 {
     let input = fs::read_to_string(filename).unwrap();
@@ -258,4 +259,41 @@ pub fn day5_part2(filename: &str) -> String {
 fn day5_test() {
     assert_eq!("HNSNMTLHQ", day5_part1("inputs/5.txt"));
     assert_eq!("RNLFDJMCT", day5_part2("inputs/5.txt"));
+}
+
+pub fn day6_part1(filename: &str) -> u32 {
+    let input = fs::read_to_string(filename).unwrap().chars().collect::<Vec<char>>();
+    let mut buffer: VecDeque<char> = VecDeque::from([input[0], input[1], input[2], input[3]]);
+    let mut input_to_process = input.iter().skip(4).rev().copied().collect::<Vec<char>>();
+    let mut i = 4;
+
+    while buffer.iter().collect::<HashSet<&char>>().len() < 4 {
+        buffer.pop_front();
+        buffer.push_back(input_to_process.pop().unwrap());
+        i += 1;
+    }
+    i
+}
+
+pub fn day6_part2(filename: &str) -> u32 {
+    let input = fs::read_to_string(filename).unwrap().chars().collect::<Vec<char>>();
+    let mut buffer: VecDeque<char> = VecDeque::new();
+    for i in &input[0..14] {
+        buffer.push_back(*i);
+    }
+    let mut input_to_process = input.iter().skip(14).rev().copied().collect::<Vec<char>>();
+    let mut i = 14;
+
+    while buffer.iter().collect::<HashSet<&char>>().len() < 14 {
+        buffer.pop_front();
+        buffer.push_back(input_to_process.pop().unwrap());
+        i += 1;
+    }
+    i
+}
+
+#[test]
+fn day6_test() {
+    assert_eq!(1929, day6_part1("inputs/6.txt"));
+    assert_eq!(3298, day6_part2("inputs/6.txt"));
 }
