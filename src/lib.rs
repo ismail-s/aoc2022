@@ -353,3 +353,90 @@ fn day6_test() {
     assert_eq!(1929, day6_part1("inputs/6.txt"));
     assert_eq!(3298, day6_part2("inputs/6.txt"));
 }
+
+pub fn day7_part1(filename: &str) -> u64 {
+    let binding = fs::read_to_string(filename).unwrap();
+    let mut input = binding.lines().skip(1).collect::<Vec<&str>>();
+    let tree = day7_create_tree("/", &mut input);
+    day7_get_dir_sizes(&tree)
+        .iter()
+        .filter(|&s| *s <= 100000)
+        .sum()
+}
+
+pub fn day7_part2(filename: &str) -> u64 {
+    let binding = fs::read_to_string(filename).unwrap();
+    let mut input = binding.lines().skip(1).collect::<Vec<&str>>();
+    let tree = day7_create_tree("/", &mut input);
+    let total_diskspace = 70000000;
+    let total_used_space = day7_get_node_size(&tree);
+    let current_unused_space = total_diskspace - total_used_space;
+    let space_required_to_free = 30000000 - current_unused_space;
+    *day7_get_dir_sizes(&tree)
+        .iter()
+        .filter(|&s| *s >= space_required_to_free)
+        .min()
+        .unwrap()
+}
+
+#[derive(Debug)]
+enum TreeNode {
+    File(String, u64),
+    Directory(String, Vec<TreeNode>),
+}
+
+fn day7_create_tree(dirname: &str, inp_lines: &mut Vec<&str>) -> TreeNode {
+    let mut v_tree: Vec<TreeNode> = Vec::new();
+    while !inp_lines.is_empty() {
+        let line = inp_lines.remove(0);
+        if line == "$ ls" {
+            while !inp_lines.is_empty() && !inp_lines[0].starts_with('$') {
+                let sub_line = inp_lines.remove(0);
+                if sub_line.starts_with('d') {
+                    continue;
+                }
+                let size = sub_line.split(' ').next().unwrap().parse::<u64>().unwrap();
+                let filename = sub_line.split(' ').nth(1).unwrap();
+                v_tree.push(TreeNode::File(filename.to_string(), size));
+            }
+        } else if line == "$ cd .." {
+            break;
+        } else {
+            let new_dirname = line.split(' ').nth(2).unwrap();
+            v_tree.push(day7_create_tree(new_dirname, inp_lines));
+        }
+    }
+    TreeNode::Directory(String::from(dirname), v_tree)
+}
+
+fn day7_get_dir_sizes(node: &TreeNode) -> Vec<u64> {
+    match node {
+        TreeNode::File(_, _) => vec![],
+        TreeNode::Directory(_, elems) => {
+            let mut ret = Vec::new();
+            for elem in elems.iter() {
+                match elem {
+                    TreeNode::Directory(_, _) => {
+                        ret.push(day7_get_node_size(elem));
+                        ret.extend(day7_get_dir_sizes(elem));
+                    }
+                    TreeNode::File(_, _) => {}
+                }
+            }
+            ret
+        }
+    }
+}
+
+fn day7_get_node_size(node: &TreeNode) -> u64 {
+    match node {
+        TreeNode::File(_, filesize) => *filesize,
+        TreeNode::Directory(_, elems) => elems.iter().map(day7_get_node_size).sum(),
+    }
+}
+
+#[test]
+fn day7_test() {
+    assert_eq!(1141028, day7_part1("inputs/7.txt"));
+    assert_eq!(8278005, day7_part2("inputs/7.txt"));
+}
