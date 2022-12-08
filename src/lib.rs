@@ -440,3 +440,124 @@ fn day7_test() {
     assert_eq!(1141028, day7_part1("inputs/7.txt"));
     assert_eq!(8278005, day7_part2("inputs/7.txt"));
 }
+
+pub fn day8_part1(filename: &str) -> usize {
+    let binding = fs::read_to_string(filename).unwrap();
+    let grid = binding
+        .lines()
+        .map(|line| line.chars().map(|c| c.to_digit(10).unwrap()).collect())
+        .collect::<Vec<Vec<u32>>>();
+    let grid_width = grid[0].len();
+    let interior_visible_trees = (grid_width * 2) + ((grid_width - 2) * 2);
+    let mut res = interior_visible_trees;
+    for row in 1..(grid_width - 1) {
+        for col in 1..(grid_width - 1) {
+            if day8_tree_is_visible(&grid, row, col) {
+                res += 1;
+            }
+        }
+    }
+    res
+}
+
+fn day8_tree_is_visible(grid: &[Vec<u32>], row: usize, col: usize) -> bool {
+    let main_tree_height = grid[row][col];
+    // Left
+    if grid[row][0..col]
+        .iter()
+        .all(|tree_height| tree_height < &main_tree_height)
+    {
+        return true;
+    }
+    // Right
+    if grid[row][col + 1..]
+        .iter()
+        .all(|tree_height| tree_height < &main_tree_height)
+    {
+        return true;
+    }
+    // Top
+    let mut b = true;
+    for r in grid[0..row].iter() {
+        if r[col] >= main_tree_height {
+            b = false;
+        }
+    }
+    if b {
+        return b;
+    }
+    // Bottom
+    let mut b = true;
+    for r in grid[row + 1..].iter() {
+        if r[col] >= main_tree_height {
+            b = false;
+        }
+    }
+    if b {
+        return b;
+    }
+    false
+}
+
+pub fn day8_part2(filename: &str) -> usize {
+    let binding = fs::read_to_string(filename).unwrap();
+    let grid = binding
+        .lines()
+        .map(|line| line.chars().map(|c| c.to_digit(10).unwrap()).collect())
+        .collect::<Vec<Vec<u32>>>();
+    let grid_width = grid[0].len();
+    let mut res = day8_scenic_score(&grid, 0, 0);
+    for row in 1..(grid_width - 1) {
+        for col in 1..(grid_width - 1) {
+            let score = day8_scenic_score(&grid, row, col);
+            if score > res {
+                res = score;
+            }
+        }
+    }
+    res
+}
+
+fn day8_scenic_score(grid: &[Vec<u32>], row: usize, col: usize) -> usize {
+    let grid_size = grid[0].len();
+    if row == 0 || col == 0 || row == (grid_size - 1) || col == (grid_size - 1) {
+        return 0;
+    }
+    let main_tree_height = grid[row][col];
+    // Left
+    let e = grid[row][..col]
+        .iter()
+        .rev()
+        .take_while(|&tree_height| *tree_height < main_tree_height)
+        .count();
+    let left_score = if e < col { e + 1 } else { e };
+    // Right
+    let e = grid[row][col + 1..]
+        .iter()
+        .take_while(|&tree_height| *tree_height < main_tree_height)
+        .count();
+    let right_score = if e < (grid_size - col - 1) { e + 1 } else { e };
+    // Top
+    let e = grid[..row]
+        .iter()
+        .rev()
+        .map(|r| r[col])
+        .take_while(|&tree_height| tree_height < main_tree_height)
+        .count();
+    let top_score = if e < row { e + 1 } else { e };
+    // Bottom
+    let e = grid[row + 1..]
+        .iter()
+        .map(|r| r[col])
+        .take_while(|&tree_height| tree_height < main_tree_height)
+        .count();
+    let bottom_score = if e < (grid_size - row - 1) { e + 1 } else { e };
+
+    left_score * right_score * top_score * bottom_score
+}
+
+#[test]
+fn day8_test() {
+    assert_eq!(1700, day8_part1("inputs/8.txt"));
+    assert_eq!(470596, day8_part2("inputs/8.txt"));
+}
