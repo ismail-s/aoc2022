@@ -561,3 +561,137 @@ fn day8_test() {
     assert_eq!(1700, day8_part1("inputs/8.txt"));
     assert_eq!(470596, day8_part2("inputs/8.txt"));
 }
+
+pub fn day9_part1(filename: &str) -> usize {
+    let binding = fs::read_to_string(filename).unwrap();
+    let motions = binding
+        .lines()
+        .map(|line| {
+            (
+                day9_convert_to_direction(line.split(' ').next().unwrap()),
+                line.split(' ').nth(1).unwrap().parse().unwrap(),
+            )
+        })
+        .collect::<Vec<(Direction, u32)>>();
+    let mut head_pos = (0, 0);
+    let mut tail_pos = (0, 0);
+    let mut tail_positions = HashSet::from([tail_pos]);
+    for (direction, count) in motions {
+        for _ in 0..count {
+            head_pos = day9_move_head(&direction, head_pos);
+            tail_pos = day9_move_tail(head_pos, tail_pos);
+            tail_positions.insert(tail_pos);
+        }
+    }
+    tail_positions.len()
+}
+
+pub fn day9_part2(filename: &str) -> usize {
+    let binding = fs::read_to_string(filename).unwrap();
+    let motions = binding
+        .lines()
+        .map(|line| {
+            (
+                day9_convert_to_direction(line.split(' ').next().unwrap()),
+                line.split(' ').nth(1).unwrap().parse().unwrap(),
+            )
+        })
+        .collect::<Vec<(Direction, u32)>>();
+    let mut head_pos = (0, 0);
+    let mut one_pos = (0, 0);
+    let mut two_pos = (0, 0);
+    let mut three_pos = (0, 0);
+    let mut four_pos = (0, 0);
+    let mut five_pos = (0, 0);
+    let mut six_pos = (0, 0);
+    let mut seven_pos = (0, 0);
+    let mut eight_pos = (0, 0);
+    let mut tail_pos = (0, 0);
+    let mut tail_positions = HashSet::from([tail_pos]);
+    for (direction, count) in motions {
+        for _ in 0..count {
+            head_pos = day9_move_head(&direction, head_pos);
+            one_pos = day9_move_tail(head_pos, one_pos);
+            two_pos = day9_move_tail(one_pos, two_pos);
+            three_pos = day9_move_tail(two_pos, three_pos);
+            four_pos = day9_move_tail(three_pos, four_pos);
+            five_pos = day9_move_tail(four_pos, five_pos);
+            six_pos = day9_move_tail(five_pos, six_pos);
+            seven_pos = day9_move_tail(six_pos, seven_pos);
+            eight_pos = day9_move_tail(seven_pos, eight_pos);
+            tail_pos = day9_move_tail(eight_pos, tail_pos);
+            tail_positions.insert(tail_pos);
+        }
+    }
+    tail_positions.len()
+}
+
+enum Direction {
+    Up,
+    Down,
+    Left,
+    Right,
+}
+
+fn day9_convert_to_direction(c: &str) -> Direction {
+    match c {
+        "U" => Direction::Up,
+        "D" => Direction::Down,
+        "L" => Direction::Left,
+        "R" => Direction::Right,
+        _ => panic!(),
+    }
+}
+
+fn day9_move_head(direction: &Direction, head_pos: (i32, i32)) -> (i32, i32) {
+    match direction {
+        Direction::Up => (head_pos.0, head_pos.1 + 1),
+        Direction::Down => (head_pos.0, head_pos.1 - 1),
+        Direction::Left => (head_pos.0 - 1, head_pos.1),
+        Direction::Right => (head_pos.0 + 1, head_pos.1),
+    }
+}
+
+fn day9_move_tail(head_pos: (i32, i32), tail_pos: (i32, i32)) -> (i32, i32) {
+    match tail_pos {
+        // close enough that tail doesn't move
+        x if x == head_pos
+            || x == (head_pos.0 + 1, head_pos.1)
+            || x == (head_pos.0 - 1, head_pos.1)
+            || x == (head_pos.0, head_pos.1 + 1)
+            || x == (head_pos.0, head_pos.1 - 1)
+            || x == (head_pos.0 + 1, head_pos.1 + 1)
+            || x == (head_pos.0 - 1, head_pos.1 + 1)
+            || x == (head_pos.0 + 1, head_pos.1 - 1)
+            || x == (head_pos.0 - 1, head_pos.1 - 1) =>
+        {
+            tail_pos
+        }
+        // 2 away in straight lines
+        x if x == (head_pos.0 + 2, head_pos.1) => (tail_pos.0 - 1, tail_pos.1),
+        x if x == (head_pos.0 - 2, head_pos.1) => (tail_pos.0 + 1, tail_pos.1),
+        x if x == (head_pos.0, head_pos.1 + 2) => (tail_pos.0, tail_pos.1 - 1),
+        x if x == (head_pos.0, head_pos.1 - 2) => (tail_pos.0, tail_pos.1 + 1),
+        // diagonals
+        x if x == (head_pos.0 - 1, head_pos.1 - 2) => (tail_pos.0 + 1, tail_pos.1 + 1),
+        x if x == (head_pos.0 - 2, head_pos.1 - 1) => (tail_pos.0 + 1, tail_pos.1 + 1),
+        x if x == (head_pos.0 - 2, head_pos.1 + 1) => (tail_pos.0 + 1, tail_pos.1 - 1),
+        x if x == (head_pos.0 - 1, head_pos.1 + 2) => (tail_pos.0 + 1, tail_pos.1 - 1),
+        x if x == (head_pos.0 + 1, head_pos.1 + 2) => (tail_pos.0 - 1, tail_pos.1 - 1),
+        x if x == (head_pos.0 + 2, head_pos.1 + 1) => (tail_pos.0 - 1, tail_pos.1 - 1),
+        x if x == (head_pos.0 + 1, head_pos.1 - 2) => (tail_pos.0 - 1, tail_pos.1 + 1),
+        x if x == (head_pos.0 + 2, head_pos.1 - 1) => (tail_pos.0 - 1, tail_pos.1 + 1),
+        // Longer diagonals (added to complete part 2)
+        x if x == (head_pos.0 - 2, head_pos.1 - 2) => (tail_pos.0 + 1, tail_pos.1 + 1),
+        x if x == (head_pos.0 - 2, head_pos.1 + 2) => (tail_pos.0 + 1, tail_pos.1 - 1),
+        x if x == (head_pos.0 + 2, head_pos.1 + 2) => (tail_pos.0 - 1, tail_pos.1 - 1),
+        x if x == (head_pos.0 + 2, head_pos.1 - 2) => (tail_pos.0 - 1, tail_pos.1 + 1),
+        _ => panic!("{:?} {:?}", tail_pos, head_pos),
+    }
+}
+
+#[test]
+fn day9_test() {
+    assert_eq!(5710, day9_part1("inputs/9.txt"));
+    assert_eq!(2259, day9_part2("inputs/9.txt"));
+}
