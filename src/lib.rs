@@ -597,30 +597,15 @@ pub fn day9_part2(filename: &str) -> usize {
             )
         })
         .collect::<Vec<(Direction, u32)>>();
-    let mut head_pos = (0, 0);
-    let mut one_pos = (0, 0);
-    let mut two_pos = (0, 0);
-    let mut three_pos = (0, 0);
-    let mut four_pos = (0, 0);
-    let mut five_pos = (0, 0);
-    let mut six_pos = (0, 0);
-    let mut seven_pos = (0, 0);
-    let mut eight_pos = (0, 0);
-    let mut tail_pos = (0, 0);
-    let mut tail_positions = HashSet::from([tail_pos]);
+    let mut positions = vec![(0, 0); 10];
+    let mut tail_positions = HashSet::from([*positions.last().unwrap()]);
     for (direction, count) in motions {
         for _ in 0..count {
-            head_pos = day9_move_head(&direction, head_pos);
-            one_pos = day9_move_tail(head_pos, one_pos);
-            two_pos = day9_move_tail(one_pos, two_pos);
-            three_pos = day9_move_tail(two_pos, three_pos);
-            four_pos = day9_move_tail(three_pos, four_pos);
-            five_pos = day9_move_tail(four_pos, five_pos);
-            six_pos = day9_move_tail(five_pos, six_pos);
-            seven_pos = day9_move_tail(six_pos, seven_pos);
-            eight_pos = day9_move_tail(seven_pos, eight_pos);
-            tail_pos = day9_move_tail(eight_pos, tail_pos);
-            tail_positions.insert(tail_pos);
+            positions[0] = day9_move_head(&direction, positions[0]);
+            for i in 1..positions.len() {
+                positions[i] = day9_move_tail(positions[i - 1], positions[i]);
+            }
+            tail_positions.insert(*positions.last().unwrap());
         }
     }
     tail_positions.len()
