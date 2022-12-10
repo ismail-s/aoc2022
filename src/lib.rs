@@ -680,3 +680,133 @@ fn day9_test() {
     assert_eq!(5710, day9_part1("inputs/9.txt"));
     assert_eq!(2259, day9_part2("inputs/9.txt"));
 }
+
+pub fn day10_part1(filename: &str) -> i32 {
+    let binding = fs::read_to_string(filename).unwrap();
+    let mut program = binding
+        .lines()
+        .rev()
+        .map(day10_parse_instruction)
+        .collect::<Vec<Day10Instruction>>();
+    let mut current_cycle = 1;
+    let mut current_instruction = program.pop().unwrap();
+    let mut add_counter = 0;
+    let mut x_register = 1;
+    let mut res = 0;
+    while current_cycle <= 220 {
+        if HashSet::from([20, 60, 100, 140, 180, 220]).contains(&current_cycle) {
+            res += current_cycle * x_register;
+        }
+        match current_instruction {
+            Day10Instruction::Noop => match program.pop() {
+                Some(instruction) => {
+                    current_instruction = instruction;
+                }
+                None => {
+                    break;
+                }
+            },
+            Day10Instruction::Add(to_add) if add_counter == 1 => {
+                x_register += to_add;
+                add_counter -= 1;
+                match program.pop() {
+                    Some(instruction) => {
+                        current_instruction = instruction;
+                    }
+                    None => {
+                        break;
+                    }
+                }
+            }
+            Day10Instruction::Add(_) => {
+                add_counter = 1;
+            }
+        }
+        current_cycle += 1;
+    }
+    res
+}
+
+pub fn day10_part2(filename: &str) -> String {
+    let binding = fs::read_to_string(filename).unwrap();
+    let mut program = binding
+        .lines()
+        .rev()
+        .map(day10_parse_instruction)
+        .collect::<Vec<Day10Instruction>>();
+    let mut current_cycle = 1;
+    let mut current_instruction = program.pop().unwrap();
+    let mut add_counter = 0;
+    let mut x_register = 1;
+    let mut res = String::with_capacity(240);
+    while current_cycle <= 240 {
+        let cycle_horiz_position = (current_cycle % 40) - 1;
+        if cycle_horiz_position == x_register - 1
+            || cycle_horiz_position == x_register
+            || cycle_horiz_position == x_register + 1
+        {
+            res.push('#');
+        } else {
+            res.push('.');
+        }
+        if current_cycle % 40 == 0 {
+            res.push('\n');
+        }
+        match current_instruction {
+            Day10Instruction::Noop => match program.pop() {
+                Some(instruction) => {
+                    current_instruction = instruction;
+                }
+                None => {
+                    break;
+                }
+            },
+            Day10Instruction::Add(to_add) if add_counter == 1 => {
+                x_register += to_add;
+                add_counter -= 1;
+                match program.pop() {
+                    Some(instruction) => {
+                        current_instruction = instruction;
+                    }
+                    None => {
+                        break;
+                    }
+                }
+            }
+            Day10Instruction::Add(_) => {
+                add_counter = 1;
+            }
+        }
+        current_cycle += 1;
+    }
+    res
+}
+
+#[derive(Debug)]
+enum Day10Instruction {
+    Noop,
+    Add(i32),
+}
+
+fn day10_parse_instruction(line: &str) -> Day10Instruction {
+    match line.split_ascii_whitespace().collect::<Vec<&str>>()[..] {
+        ["noop"] => Day10Instruction::Noop,
+        ["addx", n] => Day10Instruction::Add(n.parse().unwrap()),
+        _ => panic!(),
+    }
+}
+
+#[test]
+fn day10_test() {
+    assert_eq!(14860, day10_part1("inputs/10.txt"));
+    assert_eq!(
+        "\
+        ###...##..####.####.#..#.#..#.###..#..##\n\
+        #..#.#..#....#.#....#..#.#..#.#..#.#.#.#\n\
+        #..#.#......#..###..####.#..#.#..#.##...\n\
+        ###..#.##..#...#....#..#.#..#.###..#.#.#\n\
+        #.#..#..#.#....#....#..#.#..#.#.#..#.#.#\n\
+        #..#..###.####.####.#..#..##..#..#.#..#.\n",
+        day10_part2("inputs/10.txt")
+    );
+}
