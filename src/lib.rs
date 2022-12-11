@@ -823,11 +823,7 @@ pub fn day11_part1(filename: &str) -> u32 {
             while !notes[i].items.is_empty() {
                 let note = &mut notes[i];
                 let mut item = note.items.pop_front().unwrap();
-                item = match note.operand {
-                    Day11Operand::Plus => item + note.operation_num,
-                    Day11Operand::Times => item * note.operation_num,
-                    Day11Operand::Square => item * item,
-                };
+                item = (note.operation)(item);
                 item /= 3;
                 let divisible_by = note.divisible_by;
                 let true_pass = note.true_pass;
@@ -858,11 +854,7 @@ pub fn day11_part2(filename: &str) -> u64 {
             while !notes[i].items.is_empty() {
                 let note = &mut notes[i];
                 let mut item = note.items.pop_front().unwrap();
-                item = match note.operand {
-                    Day11Operand::Plus => item + note.operation_num,
-                    Day11Operand::Times => item * note.operation_num,
-                    Day11Operand::Square => item * item,
-                };
+                item = (note.operation)(item);
                 item %= divisor;
                 let divisible_by = note.divisible_by;
                 let true_pass = note.true_pass;
@@ -880,18 +872,9 @@ pub fn day11_part2(filename: &str) -> u64 {
     inspections.iter().rev().take(2).product()
 }
 
-#[derive(Debug)]
-enum Day11Operand {
-    Plus,
-    Times,
-    Square,
-}
-
-#[derive(Debug)]
 struct Day11Note {
     items: VecDeque<u64>,
-    operand: Day11Operand,
-    operation_num: u64,
+    operation: Box<dyn Fn(u64) -> u64>,
     divisible_by: u64,
     true_pass: usize,
     false_pass: usize,
@@ -904,25 +887,19 @@ fn day11_parse_note(note: &str) -> Day11Note {
             .split(", ")
             .map(|n| n.parse().unwrap())
             .collect(),
-        operand: {
-            let part = note_vec[1].split(' ').rev().take(2).nth(1).unwrap();
-            if note_vec[1].split(' ').rev().next().unwrap() == "old" && part == "*" {
-                Day11Operand::Square
+        operation: {
+            let parts = note_vec[1].split(' ').rev().take(2).collect::<Vec<_>>();
+            if parts == ["old", "*"] {
+                Box::new(|n| n * n)
             } else {
-                match part {
-                    "+" => Day11Operand::Plus,
-                    "*" => Day11Operand::Times,
+                let num: u64 = parts[0].parse().unwrap();
+                match parts[1] {
+                    "+" => Box::new(move |n| n + num),
+                    "*" => Box::new(move |n| n * num),
                     _ => panic!(),
                 }
             }
         },
-        operation_num: note_vec[1]
-            .split(' ')
-            .rev()
-            .next()
-            .unwrap()
-            .parse()
-            .unwrap_or(0),
         divisible_by: note_vec[2]
             .split(' ')
             .rev()
