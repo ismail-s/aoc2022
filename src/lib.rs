@@ -810,3 +810,145 @@ fn day10_test() {
         day10_part2("inputs/10.txt")
     );
 }
+
+pub fn day11_part1(filename: &str) -> u32 {
+    let binding = fs::read_to_string(filename).unwrap();
+    let mut notes = binding
+        .split("\n\n")
+        .map(day11_parse_note)
+        .collect::<Vec<_>>();
+    let mut inspections = vec![0; notes.len()];
+    for _ in 0..20 {
+        for i in 0..notes.len() {
+            while !notes[i].items.is_empty() {
+                let note = &mut notes[i];
+                let mut item = note.items.pop_front().unwrap();
+                item = match note.operand {
+                    Day11Operand::Plus => item + note.operation_num,
+                    Day11Operand::Times => item * note.operation_num,
+                    Day11Operand::Square => item * item,
+                };
+                item /= 3;
+                let divisible_by = note.divisible_by;
+                let true_pass = note.true_pass;
+                let false_pass = note.false_pass;
+                if item % divisible_by == 0 {
+                    notes[true_pass].items.push_back(item);
+                } else {
+                    notes[false_pass].items.push_back(item);
+                }
+                inspections[i] += 1;
+            }
+        }
+    }
+    inspections.sort();
+    inspections.iter().rev().take(2).product()
+}
+
+pub fn day11_part2(filename: &str) -> u64 {
+    let binding = fs::read_to_string(filename).unwrap();
+    let mut notes = binding
+        .split("\n\n")
+        .map(day11_parse_note)
+        .collect::<Vec<_>>();
+    let divisor: u64 = notes.iter().map(|n| n.divisible_by).product();
+    let mut inspections = vec![0; notes.len()];
+    for _ in 0..10000 {
+        for i in 0..notes.len() {
+            while !notes[i].items.is_empty() {
+                let note = &mut notes[i];
+                let mut item = note.items.pop_front().unwrap();
+                item = match note.operand {
+                    Day11Operand::Plus => item + note.operation_num,
+                    Day11Operand::Times => item * note.operation_num,
+                    Day11Operand::Square => item * item,
+                };
+                item %= divisor;
+                let divisible_by = note.divisible_by;
+                let true_pass = note.true_pass;
+                let false_pass = note.false_pass;
+                if item % divisible_by == 0 {
+                    notes[true_pass].items.push_back(item);
+                } else {
+                    notes[false_pass].items.push_back(item);
+                }
+                inspections[i] += 1;
+            }
+        }
+    }
+    inspections.sort();
+    inspections.iter().rev().take(2).product()
+}
+
+#[derive(Debug)]
+enum Day11Operand {
+    Plus,
+    Times,
+    Square,
+}
+
+#[derive(Debug)]
+struct Day11Note {
+    items: VecDeque<u64>,
+    operand: Day11Operand,
+    operation_num: u64,
+    divisible_by: u64,
+    true_pass: usize,
+    false_pass: usize,
+}
+
+fn day11_parse_note(note: &str) -> Day11Note {
+    let note_vec = note.lines().skip(1).collect::<Vec<_>>();
+    Day11Note {
+        items: note_vec[0][note_vec[0].find(':').unwrap() + 2..]
+            .split(", ")
+            .map(|n| n.parse().unwrap())
+            .collect(),
+        operand: {
+            let part = note_vec[1].split(' ').rev().take(2).nth(1).unwrap();
+            if note_vec[1].split(' ').rev().next().unwrap() == "old" && part == "*" {
+                Day11Operand::Square
+            } else {
+                match part {
+                    "+" => Day11Operand::Plus,
+                    "*" => Day11Operand::Times,
+                    _ => panic!(),
+                }
+            }
+        },
+        operation_num: note_vec[1]
+            .split(' ')
+            .rev()
+            .next()
+            .unwrap()
+            .parse()
+            .unwrap_or(0),
+        divisible_by: note_vec[2]
+            .split(' ')
+            .rev()
+            .next()
+            .unwrap()
+            .parse()
+            .unwrap(),
+        true_pass: note_vec[3]
+            .split(' ')
+            .rev()
+            .next()
+            .unwrap()
+            .parse()
+            .unwrap(),
+        false_pass: note_vec[4]
+            .split(' ')
+            .rev()
+            .next()
+            .unwrap()
+            .parse()
+            .unwrap(),
+    }
+}
+
+#[test]
+fn day11_test() {
+    assert_eq!(67830, day11_part1("inputs/11.txt"));
+    assert_eq!(15305381442, day11_part2("inputs/11.txt"));
+}
