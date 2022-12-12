@@ -1,4 +1,5 @@
 use regex::Regex;
+use std::collections::HashMap;
 use std::collections::HashSet;
 use std::collections::VecDeque;
 use std::fs;
@@ -928,4 +929,153 @@ fn day11_parse_note(note: &str) -> Day11Note {
 fn day11_test() {
     assert_eq!(67830, day11_part1("inputs/11.txt"));
     assert_eq!(15305381442, day11_part2("inputs/11.txt"));
+}
+
+pub fn day12_part1(filename: &str) -> usize {
+    let binding = fs::read_to_string(filename).unwrap();
+    let heightmap = binding
+        .lines()
+        .map(|line| line.chars().collect::<Vec<_>>())
+        .collect::<Vec<_>>();
+    let mut current_point = (0, 0);
+    let mut destination_point = (0, 0);
+    let mut distances = HashMap::with_capacity(heightmap.len() * heightmap[0].len());
+    let mut unvisited = HashSet::new();
+    for (i, row) in heightmap.iter().enumerate() {
+        for (j, &elevation) in row.iter().enumerate() {
+            if elevation == 'S' {
+                current_point = (i, j);
+            }
+            if elevation == 'E' {
+                destination_point = (i, j);
+            }
+            distances.insert((i, j), 2 * heightmap.len() * heightmap[0].len());
+            unvisited.insert((i, j));
+        }
+    }
+    distances.insert(current_point, 0);
+    loop {
+        let neighbours = day12_neighbours_of(current_point, &heightmap)
+            .iter()
+            .filter(|neighbour| unvisited.contains(neighbour))
+            .copied()
+            .collect::<Vec<_>>();
+        for neighbour in neighbours {
+            let min_distance = distances[&neighbour].min(distances[&current_point] + 1);
+            distances.insert(neighbour, min_distance);
+        }
+        unvisited.remove(&current_point);
+        if !unvisited.contains(&destination_point) {
+            break;
+        }
+        current_point = *unvisited.iter().min_by_key(|node| distances[node]).unwrap();
+    }
+    distances[&destination_point]
+}
+
+fn day12_neighbours_of(
+    (start_i, start_j): (usize, usize),
+    heightmap: &Vec<Vec<char>>,
+) -> Vec<(usize, usize)> {
+    let row_len = heightmap[0].len() as i64;
+    let col_len = heightmap.len() as i64;
+    let start_elevation = day12_get_elevation((start_i, start_j), heightmap);
+    let sstart_i = start_i as i64;
+    let sstart_j = start_j as i64;
+    [
+        (sstart_i - 1, sstart_j),
+        (sstart_i + 1, sstart_j),
+        (sstart_i, sstart_j - 1),
+        (sstart_i, sstart_j + 1),
+    ]
+    .iter()
+    .filter(|(i, j)| i >= &0 && j >= &0 && i < &col_len && j < &row_len)
+    .map(|(i, j)| (*i as usize, *j as usize))
+    .filter(|(i, j)| (start_elevation + 1) >= day12_get_elevation((*i, *j), heightmap))
+    .collect()
+}
+
+fn day12_get_elevation((i, j): (usize, usize), heightmap: &[Vec<char>]) -> u32 {
+    match heightmap[i][j] {
+        'S' => 0,
+        'E' => ('z' as u32) - ('a' as u32),
+        c => (c as u32) - ('a' as u32),
+    }
+}
+
+fn day12_neighbours_of_2(
+    (start_i, start_j): (usize, usize),
+    heightmap: &Vec<Vec<char>>,
+) -> Vec<(usize, usize)> {
+    let row_len = heightmap[0].len() as i64;
+    let col_len = heightmap.len() as i64;
+    let start_elevation = day12_get_elevation((start_i, start_j), heightmap) as i64;
+    let sstart_i = start_i as i64;
+    let sstart_j = start_j as i64;
+    [
+        (sstart_i - 1, sstart_j),
+        (sstart_i + 1, sstart_j),
+        (sstart_i, sstart_j - 1),
+        (sstart_i, sstart_j + 1),
+    ]
+    .iter()
+    .filter(|(i, j)| i >= &0 && j >= &0 && i < &col_len && j < &row_len)
+    .map(|(i, j)| (*i as usize, *j as usize))
+    .filter(|(i, j)| (start_elevation - 1) <= (day12_get_elevation((*i, *j), heightmap) as i64))
+    .collect()
+}
+
+pub fn day12_part2(filename: &str) -> usize {
+    let binding = fs::read_to_string(filename).unwrap();
+    let heightmap = binding
+        .lines()
+        .map(|line| line.chars().collect::<Vec<_>>())
+        .collect::<Vec<_>>();
+    let effective_infinity = 2 * heightmap.len() * heightmap[0].len();
+    let mut current_point = (0, 0);
+    let mut destination_points = HashSet::new();
+    let mut distances = HashMap::with_capacity(heightmap.len() * heightmap[0].len());
+    let mut unvisited = HashSet::new();
+    for (i, row) in heightmap.iter().enumerate() {
+        for (j, &elevation) in row.iter().enumerate() {
+            if elevation == 'E' {
+                current_point = (i, j);
+            }
+            if elevation == 'S' || elevation == 'a' {
+                destination_points.insert((i, j));
+            }
+            distances.insert((i, j), effective_infinity);
+            unvisited.insert((i, j));
+        }
+    }
+    distances.insert(current_point, 0);
+    loop {
+        let neighbours = day12_neighbours_of_2(current_point, &heightmap)
+            .iter()
+            .filter(|neighbour| unvisited.contains(neighbour))
+            .copied()
+            .collect::<Vec<_>>();
+        for neighbour in neighbours {
+            let min_distance = distances[&neighbour].min(distances[&current_point] + 1);
+            distances.insert(neighbour, min_distance);
+        }
+        unvisited.remove(&current_point);
+        if unvisited.is_empty()
+            || unvisited.iter().map(|node| distances[node]).min().unwrap() == effective_infinity
+        {
+            break;
+        }
+        current_point = *unvisited.iter().min_by_key(|node| distances[node]).unwrap();
+    }
+    destination_points
+        .iter()
+        .map(|node| distances[node])
+        .min()
+        .unwrap()
+}
+
+#[test]
+fn day12_test() {
+    assert_eq!(497, day12_part1("inputs/12.txt"));
+    assert_eq!(492, day12_part2("inputs/12.txt"));
 }
