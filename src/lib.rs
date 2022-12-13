@@ -1,4 +1,6 @@
 use regex::Regex;
+use serde::Deserialize;
+use std::cmp::Ordering;
 use std::collections::HashMap;
 use std::collections::HashSet;
 use std::collections::VecDeque;
@@ -1078,4 +1080,88 @@ pub fn day12_part2(filename: &str) -> usize {
 fn day12_test() {
     assert_eq!(497, day12_part1("inputs/12.txt"));
     assert_eq!(492, day12_part2("inputs/12.txt"));
+}
+
+pub fn day13_part1(filename: &str) -> usize {
+    let binding = fs::read_to_string(filename).unwrap();
+    let pairs = binding
+        .split("\n\n")
+        .map(|pair| {
+            let mut parsed_pair = pair
+                .lines()
+                .map(|l| serde_json::from_str::<Day13List>(l).unwrap())
+                .collect::<Vec<_>>();
+            (parsed_pair.remove(0), parsed_pair.remove(0))
+        })
+        .collect::<Vec<_>>();
+    let mut res = 0;
+    for (i, pair) in pairs.iter().enumerate() {
+        if day13_pair_in_right_order(&pair.0, &pair.1) == Ordering::Less {
+            res += i + 1;
+        }
+    }
+    res
+}
+
+pub fn day13_part2(filename: &str) -> usize {
+    let binding = fs::read_to_string(filename).unwrap();
+    let mut pairs = binding
+        .split("\n\n")
+        .flat_map(|pair| pair.lines())
+        .map(serde_json::from_str)
+        .collect::<Result<Vec<_>, _>>()
+        .unwrap();
+    let first_divider = Day13List::List(vec![Day13List::List(vec![Day13List::Num(2)])]);
+    let second_divider = Day13List::List(vec![Day13List::List(vec![Day13List::Num(6)])]);
+    pairs.push(first_divider.clone());
+    pairs.push(second_divider.clone());
+
+    pairs.sort_by(day13_pair_in_right_order);
+
+    let first_pos = pairs
+        .iter()
+        .position(|pair| pair == &first_divider)
+        .unwrap()
+        + 1;
+    let second_pos = pairs
+        .iter()
+        .position(|pair| pair == &second_divider)
+        .unwrap()
+        + 1;
+    first_pos * second_pos
+}
+
+#[derive(Clone, Debug, Deserialize, serde::Serialize)]
+#[serde(untagged)]
+#[derive(PartialEq)]
+enum Day13List {
+    Num(u32),
+    List(Vec<Day13List>),
+}
+
+fn day13_pair_in_right_order(left: &Day13List, right: &Day13List) -> Ordering {
+    match (left, right) {
+        (Day13List::Num(l), Day13List::Num(r)) => l.cmp(r),
+        (Day13List::Num(_), Day13List::List(_)) => {
+            day13_pair_in_right_order(&Day13List::List(vec![left.clone()]), right)
+        }
+        (Day13List::List(_), Day13List::Num(_)) => {
+            day13_pair_in_right_order(left, &Day13List::List(vec![right.clone()]))
+        }
+        (Day13List::List(l), Day13List::List(r)) => {
+            for (ll, rr) in l.iter().zip(r) {
+                match day13_pair_in_right_order(ll, rr) {
+                    Ordering::Equal => continue,
+                    other => return other,
+                }
+            }
+            l.len().cmp(&r.len())
+        }
+    }
+}
+
+#[test]
+fn day13_test() {
+    assert_eq!(4894, day13_part1("inputs/13.txt"));
+    assert_eq!(24180, day13_part2("inputs/13.txt"));
 }
