@@ -1165,3 +1165,132 @@ fn day13_test() {
     assert_eq!(4894, day13_part1("inputs/13.txt"));
     assert_eq!(24180, day13_part2("inputs/13.txt"));
 }
+
+pub fn day14_part1(filename: &str) -> usize {
+    let binding = fs::read_to_string(filename).unwrap();
+    let mut points = day14_parse_input(&binding);
+    let lowest_point = *points.iter().map(|(_, y)| y).max().unwrap();
+    let sand_spawn_point = (500, 0);
+    let mut caught_sand = 0;
+    loop {
+        let mut sand_grain = sand_spawn_point;
+        loop {
+            if sand_grain.1 > (lowest_point + 100) {
+                return caught_sand;
+            }
+            let one_below = (sand_grain.0, sand_grain.1 + 1);
+            if !points.contains(&one_below) {
+                sand_grain = one_below;
+            } else {
+                let one_below_left = (sand_grain.0 - 1, sand_grain.1 + 1);
+                if !points.contains(&one_below_left) {
+                    sand_grain = one_below_left;
+                } else {
+                    let one_below_right = (sand_grain.0 + 1, sand_grain.1 + 1);
+                    if !points.contains(&one_below_right) {
+                        sand_grain = one_below_right;
+                    } else {
+                        // Sand is blocked all ways
+                        points.insert(sand_grain);
+                        caught_sand += 1;
+                        break;
+                    }
+                }
+            }
+        }
+    }
+}
+
+pub fn day14_part2(filename: &str) -> usize {
+    let binding = fs::read_to_string(filename).unwrap();
+    let mut points = day14_parse_input(&binding);
+    let floor_height = 2 + points.iter().map(|(_, y)| y).max().unwrap();
+    let sand_spawn_point = (500, 0);
+    let mut caught_sand = 0;
+    loop {
+        let mut sand_grain = sand_spawn_point;
+        loop {
+            if sand_grain.1 + 1 == floor_height {
+                // Sand grain is on the floor and can't go any further
+                points.insert(sand_grain);
+                caught_sand += 1;
+                break;
+            }
+            let one_below = (sand_grain.0, sand_grain.1 + 1);
+            if !points.contains(&one_below) {
+                sand_grain = one_below;
+            } else {
+                let one_below_left = (sand_grain.0 - 1, sand_grain.1 + 1);
+                if !points.contains(&one_below_left) {
+                    sand_grain = one_below_left;
+                } else {
+                    let one_below_right = (sand_grain.0 + 1, sand_grain.1 + 1);
+                    if !points.contains(&one_below_right) {
+                        sand_grain = one_below_right;
+                    } else {
+                        // Sand is blocked all ways
+                        points.insert(sand_grain);
+                        caught_sand += 1;
+                        // If sand grain is still at the spawn point, then return result
+                        if sand_grain == sand_spawn_point {
+                            return caught_sand;
+                        }
+                        break;
+                    }
+                }
+            }
+        }
+    }
+}
+
+fn day14_parse_input(input: &str) -> HashSet<(u32, u32)> {
+    input
+        .lines()
+        .flat_map(|line| {
+            let points = line
+                .split(" -> ")
+                .map(|point| {
+                    (
+                        point.split(',').next().unwrap().parse().unwrap(),
+                        point.split(',').nth(1).unwrap().parse().unwrap(),
+                    )
+                })
+                .collect::<Vec<(u32, u32)>>();
+            points
+                .iter()
+                .zip(points.iter().skip(1))
+                .flat_map(|((first_x, first_y), (second_x, second_y))| {
+                    if first_x == second_x {
+                        match first_y.cmp(second_y) {
+                            Ordering::Greater => {
+                                (*second_y..(*first_y + 1)).map(|y| (*first_x, y)).collect()
+                            }
+                            Ordering::Less => {
+                                (*first_y..(*second_y + 1)).map(|y| (*first_x, y)).collect()
+                            }
+                            Ordering::Equal => HashSet::from([(*first_x, *first_y)]),
+                        }
+                    } else if first_y == second_y {
+                        match first_x.cmp(second_x) {
+                            Ordering::Greater => {
+                                (*second_x..(*first_x + 1)).map(|x| (x, *first_y)).collect()
+                            }
+                            Ordering::Less => {
+                                (*first_x..(*second_x + 1)).map(|x| (x, *first_y)).collect()
+                            }
+                            Ordering::Equal => HashSet::from([(*first_x, *first_y)]),
+                        }
+                    } else {
+                        panic!();
+                    }
+                })
+                .collect::<HashSet<_>>()
+        })
+        .collect::<HashSet<_>>()
+}
+
+#[test]
+fn day14_test() {
+    assert_eq!(979, day14_part1("inputs/14.txt"));
+    assert_eq!(29044, day14_part2("inputs/14.txt"));
+}
